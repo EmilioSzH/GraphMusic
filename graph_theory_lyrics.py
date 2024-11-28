@@ -94,13 +94,39 @@ if __name__ == "__main__":
     lyrics_graph = create_lyrics_graph(rhyme_groups)
 
     # Define a rhyme scheme and generate lyrics
-    rhyme_scheme = "AABB"  # Example rhyme scheme
+    # Song format: Verse / Chorus / Verse / Chorus / Bridge / Chorus
+    verse1 = "BBCC"
     num_lines = 4
-    lyrics, path = generate_lyrics(lyrics_graph, rhyme_scheme, num_lines)
+    verse1_lyrics, verse1_path = generate_lyrics(lyrics_graph, verse1, num_lines)
+
+    verse2 = "BBCC"
+    num_lines = 4
+    verse2_lyrics, verse2_path = generate_lyrics(lyrics_graph, verse2, num_lines)
+
+    chorus = "AAAA"  # Example rhyme scheme
+    num_lines = 4
+    chorus_lyrics, chorus_path = generate_lyrics(lyrics_graph, chorus, num_lines)
+
+    bridge = "DDEE"
+    num_lines = 4
+    bridge_lyrics, bridge_path = generate_lyrics(lyrics_graph, bridge, num_lines)
 
     # Output the generated lyrics
-    print("Generated Rhyming Lyrics:")
-    print(lyrics)
+    print("[Verse 1]")
+    print(verse1_lyrics)
+    print("[Chorus]")
+    print(chorus_lyrics)
+    print("[Verse 2]")
+    print(verse2_lyrics)
+    print("[Chorus]")
+    print(chorus_lyrics)
+    print("[Bridge]")
+    print(bridge_lyrics)
+    print("[Chorus]")
+    print(chorus_lyrics)
 
     # Visualize the graph with the generated lyrics path
-    visualize_lyrics_graph(lyrics_graph, path)
+    visualize_lyrics_graph(lyrics_graph, verse1_path)
+    visualize_lyrics_graph(lyrics_graph, chorus_path)
+    visualize_lyrics_graph(lyrics_graph, verse2_path)
+    visualize_lyrics_graph(lyrics_graph, bridge_path)
