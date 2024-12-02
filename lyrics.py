@@ -1,3 +1,4 @@
+import os
 import networkx as nx
 import matplotlib.pyplot as plt
 import random
@@ -72,7 +73,7 @@ def generate_lyrics(graph, rhyme_scheme="AABB", num_lines=8):
     return "\n".join(lyrics), path
 
 # Visualize the graph and highlight the generated lyrics
-def visualize_lyrics_graph(graph, path):
+def visualize_lyrics_graph(graph, path, folder_name="createdFiles", filename="graph.png"):
     pos = nx.spring_layout(graph)  # Layout for positioning nodes
 
     # Draw all nodes and edges
@@ -84,17 +85,21 @@ def visualize_lyrics_graph(graph, path):
     nx.draw_networkx_nodes(graph, pos, nodelist=path, node_color="orange", node_size=2500)
     nx.draw_networkx_edges(graph, pos, edgelist=path_edges, edge_color="red", width=2)
 
-    # Display the graph
+    # Save the graph to the specified folder
+    os.makedirs(folder_name, exist_ok=True)
+    file_path = os.path.join(folder_name, filename)
     plt.title("Lyrics Generation Path in the Graph", fontsize=16)
-    plt.show()
+    plt.savefig(file_path, bbox_inches='tight', dpi=300)
+    print(f"Lyrics graph saved as '{file_path}'")
+    plt.close()
 
 # Main function
 if __name__ == "__main__":
     # Create the graph
     lyrics_graph = create_lyrics_graph(rhyme_groups)
+    print("Lyrical Graph created")
 
     # Define a rhyme scheme and generate lyrics
-    # Song format: Verse / Chorus / Verse / Chorus / Bridge / Chorus
     verse1 = "BBCC"
     num_lines = 4
     verse1_lyrics, verse1_path = generate_lyrics(lyrics_graph, verse1, num_lines)
@@ -111,22 +116,30 @@ if __name__ == "__main__":
     num_lines = 4
     bridge_lyrics, bridge_path = generate_lyrics(lyrics_graph, bridge, num_lines)
 
-    # Output the generated lyrics
-    print("[Verse 1]")
-    print(verse1_lyrics)
-    print("[Chorus]")
-    print(chorus_lyrics)
-    print("[Verse 2]")
-    print(verse2_lyrics)
-    print("[Chorus]")
-    print(chorus_lyrics)
-    print("[Bridge]")
-    print(bridge_lyrics)
-    print("[Chorus]")
-    print(chorus_lyrics)
+    # Ensure the createdFiles folder exists
+    folder_name = "createdFiles"
+    os.makedirs(folder_name, exist_ok=True)
 
-    # Visualize the graph with the generated lyrics path
-    visualize_lyrics_graph(lyrics_graph, verse1_path)
-    visualize_lyrics_graph(lyrics_graph, chorus_path)
-    visualize_lyrics_graph(lyrics_graph, verse2_path)
-    visualize_lyrics_graph(lyrics_graph, bridge_path)
+    # Write the generated lyrics to a file
+    file_path = os.path.join(folder_name, "lyrics.txt")
+    with open(file_path, "w") as f:
+        f.write("[Verse 1]\n")
+        f.write(verse1_lyrics + "\n\n")
+        f.write("[Chorus]\n")
+        f.write(chorus_lyrics + "\n\n")
+        f.write("[Verse 2]\n")
+        f.write(verse2_lyrics + "\n\n")
+        f.write("[Chorus]\n")
+        f.write(chorus_lyrics + "\n\n")
+        f.write("[Bridge]\n")
+        f.write(bridge_lyrics + "\n\n")
+        f.write("[Chorus]\n")
+        f.write(chorus_lyrics + "\n\n")
+
+    print(f"Lyrics written to '{file_path}'.")
+
+    # Visualize the graph with the generated lyrics path and save to createdFiles
+    visualize_lyrics_graph(lyrics_graph, verse1_path, folder_name, "lyrics_verse1_graph.png")
+    visualize_lyrics_graph(lyrics_graph, chorus_path, folder_name, "lyrics_chorus_graph.png")
+    visualize_lyrics_graph(lyrics_graph, verse2_path, folder_name, "lyrics_verse2_graph.png")
+    visualize_lyrics_graph(lyrics_graph, bridge_path, folder_name, "lyrics_bridge_graph.png")
