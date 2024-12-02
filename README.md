@@ -154,4 +154,4 @@ Outputs:
 
 ## Acknowledgements
 
-This project was developed as part of **CS5002: Algorithmic Thinking**, showcasing the application of algorithms and graph theory to creative tasks like music generation. Special thanks to **Dr. Amjad** for the inspiration and guidance throughout the course.
+This project was developed as part of **CS5002: Discrete Structures**, showcasing the application of algorithms and graph theory to creative tasks like music generation. Special thanks to **Dr. Amjad** for the inspiration and guidance throughout the course.
