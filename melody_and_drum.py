@@ -1,6 +1,8 @@
 from mido import Message, MidiFile, MidiTrack
 import random
 import pygame
+import networkx as nx
+import matplotlib.pyplot as plt
 
 # Define melody map
 melody_map = {
@@ -101,6 +103,93 @@ def generate_drum_pattern(lyrics):
         drum_sequence.extend(line_drums)
     
     return drum_sequence
+
+def visualize_melody_with_full_nodes(melody_map):
+    """
+    Create and visualize melody graphs for each section, ensuring all nodes appear in all graphs,
+    but highlighting only the nodes used in each specific section.
+
+    Args:
+        melody_map (dict): A dictionary where keys are sections (e.g., "Verse 1") 
+                           and values are lists of dictionaries representing notes.
+    """
+    # Helper function to convert MIDI note numbers to note names
+    def midi_to_note_name(midi_note):
+        NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+        octave = midi_note // 12 - 1
+        note = NOTE_NAMES[midi_note % 12]
+        return f"{note}{octave}"
+    
+    # Collect all unique nodes across all sections
+    all_notes = set()
+    for notes in melody_map.values():
+        for note_data in notes:
+            all_notes.add(midi_to_note_name(note_data["note"]))
+
+    # Visualize melody graph for each section
+    for section, notes in melody_map.items():
+        G = nx.DiGraph()
+        
+        # Add all unique notes as nodes (to ensure all nodes appear in every graph)
+        for note in all_notes:
+            G.add_node(note)
+        
+        # Add edges for the section
+        section_nodes = set()
+        for i in range(len(notes) - 1):
+            current_note = midi_to_note_name(notes[i]["note"])
+            next_note = midi_to_note_name(notes[i + 1]["note"])
+            section_nodes.update([current_note, next_note])
+            
+            # Add edge
+            if G.has_edge(current_note, next_note):
+                G[current_note][next_note]["weight"] += 1
+            else:
+                G.add_edge(current_note, next_note, weight=1)
+        
+        # Create visualization
+        plt.figure(figsize=(12, 10))
+        pos = nx.spring_layout(G, k=0.8, iterations=50)
+        
+        # Draw all nodes in gray
+        nx.draw_networkx_nodes(
+            G, pos, 
+            nodelist=all_notes, 
+            node_color="lightgray", 
+            node_size=1000, 
+            edgecolors="black"
+        )
+        
+        # Highlight nodes used in the current section in blue
+        nx.draw_networkx_nodes(
+            G, pos, 
+            nodelist=section_nodes, 
+            node_color="skyblue", 
+            node_size=1000, 
+            edgecolors="black"
+        )
+        
+        # Draw edges with thickness proportional to weight
+        edge_weights = [G[u][v]["weight"] for u, v in G.edges()]
+        nx.draw_networkx_edges(
+            G, pos, 
+            edge_color="gray", 
+            width=[2 + weight * 0.5 for weight in edge_weights],
+            arrows=True, 
+            arrowsize=20
+        )
+        
+        # Add labels to nodes
+        nx.draw_networkx_labels(G, pos, font_size=12, font_weight="bold")
+        
+        # Add title for the section
+        plt.title(f"Melody Graph - {section}", fontsize=20, fontweight="bold", pad=20)
+        plt.axis("off")
+        plt.show()
+
+# Example usage
+visualize_melody_with_full_nodes(melody_map)
+
 
 def create_combined_midi_file(melody_notes, drum_sequence):
     """
