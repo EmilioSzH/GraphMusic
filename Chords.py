@@ -120,11 +120,6 @@ class ChordProgressionGenerator:
         plt.savefig(file_path, bbox_inches='tight', dpi=300)
         print(f"Graph visualization saved as '{file_path}'")
 
-        if display:
-            plt.show()
-        else:
-            plt.close()
-
     # Rest of the class methods remain the same
     def generate_section(self, key, length=4, start=None):
         """Generate a chord progression in specified key"""
@@ -146,7 +141,7 @@ class ChordProgressionGenerator:
             
         return progression
     
-    def create_multi_section_midi(self, sections, folder_name='createdFiles', filename='full_progression.mid'):
+    def create_multi_section_midi(self, sections, folder_name='createdFiles', filename='chords.mid'):
         """Create a MIDI file with multiple sections"""
         os.makedirs(folder_name, exist_ok=True)  # Ensure the folder exists
         file_path = os.path.join(folder_name, filename)

@@ -1,15 +1,18 @@
 from mido import MidiFile, MidiTrack, MetaMessage
 import pygame
 from time import sleep
+import os
 
 def merge_midi_files(input_files, output_file):
     """
     Merge multiple MIDI files into a single MIDI file.
-
-    Args:
-        input_files (list): List of MIDI file paths to merge.
-        output_file (str): Path for the output merged MIDI file.
     """
+    # Check if all input files exist
+    for file in input_files:
+        if not os.path.exists(file):
+            print(f"Error: File '{file}' not found.")
+            return
+    
     # Create a new MIDI file for merging
     merged_midi = MidiFile()
 
@@ -17,13 +20,9 @@ def merge_midi_files(input_files, output_file):
     for file in input_files:
         midi = MidiFile(file)
         for i, track in enumerate(midi.tracks):
-            # Create a new track in the merged MIDI file
             merged_track = MidiTrack()
-            # Add a track name meta message
             merged_track.append(MetaMessage('track_name', name=f"{file}-Track-{i}"))
-            # Copy all events from the current track
             merged_track.extend(track)
-            # Add the track to the merged MIDI
             merged_midi.tracks.append(merged_track)
     
     # Save the merged MIDI file
@@ -33,9 +32,6 @@ def merge_midi_files(input_files, output_file):
 def play_midi_file(filename):
     """
     Play a MIDI file using pygame.
-
-    Args:
-        filename (str): Path to the MIDI file to play.
     """
     print(f"Playing MIDI file: {filename}")
     pygame.init()
@@ -52,13 +48,20 @@ def play_midi_file(filename):
         pygame.quit()
 
 # Specify the input files
-input_files = ['full_progression.mid', 'melody.mid', 'drum_pattern.mid']  # Replace with your actual file names
+input_files = [
+    'createdFiles/chords.mid',
+    'createdFiles/melody.mid',
+    'createdFiles/drum_pattern.mid'
+]
 
 # Specify the output file
-output_file = 'merged_song.mid'
+output_file = 'createdFiles/merged_song.mid'
 
 # Merge the files
 merge_midi_files(input_files, output_file)
 
-# Play the merged MIDI file
-play_midi_file(output_file)
+# Play the merged MIDI file if it exists
+if os.path.exists(output_file):
+    play_midi_file(output_file)
+else:
+    print(f"Error: Merged file '{output_file}' not created.")

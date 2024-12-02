@@ -2,7 +2,7 @@ sequence:
   - name: "Run Lyrics Processor"
     description: "Process lyrics."
     script: "python lyrics.py"
-    output: "lyrics_data.txt"
+    output: "lyrics.txt"
 
   - name: "Run Chords Generator"
     description: "Generate the chords MIDI file."
@@ -17,7 +17,7 @@ sequence:
   - name: "Run Drum Generator"
     description: "Generate the drum MIDI file."
     script: "python drum.py"
-    output: "drums.mid"
+    output: "drum_pattern.mid"
 
   - name: "Merge MIDI Files"
     description: "Combine all generated MIDI tracks into a single file."

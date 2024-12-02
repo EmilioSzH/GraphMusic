@@ -159,7 +159,7 @@ def visualize_melody_with_full_nodes(melody_map, folder_name='createdFiles'):
         plt.axis("off")
 
         # Save the graph in the createdFiles folder
-        file_path = os.path.join(folder_name, f"{section.replace(' ', '_')}_melody_graph.png")
+        file_path = os.path.join(folder_name, f"melody_{section.replace(' ', '_')}_graph.png")
         plt.savefig(file_path, bbox_inches='tight', dpi=300)
         print(f"Graph for '{section}' saved as '{file_path}'")
 
