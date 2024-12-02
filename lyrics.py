@@ -1,3 +1,4 @@
+import os
 import networkx as nx
 import matplotlib.pyplot as plt
 import random
@@ -95,7 +96,6 @@ if __name__ == "__main__":
     print("Lyrical Graph created")
 
     # Define a rhyme scheme and generate lyrics
-    # Song format: Verse / Chorus / Verse / Chorus / Bridge / Chorus
     verse1 = "BBCC"
     num_lines = 4
     verse1_lyrics, verse1_path = generate_lyrics(lyrics_graph, verse1, num_lines)
@@ -112,19 +112,27 @@ if __name__ == "__main__":
     num_lines = 4
     bridge_lyrics, bridge_path = generate_lyrics(lyrics_graph, bridge, num_lines)
 
-    # Output the generated lyrics
-    print("[Verse 1]")
-    print(verse1_lyrics)
-    print("[Chorus]")
-    print(chorus_lyrics)
-    print("[Verse 2]")
-    print(verse2_lyrics)
-    print("[Chorus]")
-    print(chorus_lyrics)
-    print("[Bridge]")
-    print(bridge_lyrics)
-    print("[Chorus]")
-    print(chorus_lyrics)
+    # Ensure the createFiles folder exists
+    folder_name = "createdFiles"
+    os.makedirs(folder_name, exist_ok=True)
+
+    # Write the generated lyrics to a file
+    file_path = os.path.join(folder_name, "lyrics.txt")
+    with open(file_path, "w") as f:
+        f.write("[Verse 1]\n")
+        f.write(verse1_lyrics + "\n\n")
+        f.write("[Chorus]\n")
+        f.write(chorus_lyrics + "\n\n")
+        f.write("[Verse 2]\n")
+        f.write(verse2_lyrics + "\n\n")
+        f.write("[Chorus]\n")
+        f.write(chorus_lyrics + "\n\n")
+        f.write("[Bridge]\n")
+        f.write(bridge_lyrics + "\n\n")
+        f.write("[Chorus]\n")
+        f.write(chorus_lyrics + "\n\n")
+
+    print(f"Lyrics written to '{file_path}'.")
 
     # Visualize the graph with the generated lyrics path
     visualize_lyrics_graph(lyrics_graph, verse1_path)

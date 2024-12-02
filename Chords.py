@@ -69,8 +69,12 @@ class ChordProgressionGenerator:
         ]
         self.graphs['Am'].add_weighted_edges_from(a_minor_edges)
     
-    def visualize_graphs(self, save_path_prefix='chord_graph', display=True):
+    def visualize_graphs(self, folder_name='createdFiles', save_path_prefix='chord_graph', display=True):
         """Visualize and save chord progression graphs for both keys"""
+        # Ensure the folder exists
+        os.makedirs(folder_name, exist_ok=True)
+        file_path = os.path.join(folder_name, f'{save_path_prefix}_combined.png')
+
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20, 8))
         
         # Draw C major graph
@@ -113,8 +117,9 @@ class ChordProgressionGenerator:
         plt.tight_layout()
         
         # Save the figure
-        plt.savefig(f'{save_path_prefix}_combined.png', bbox_inches='tight', dpi=300)
-        
+        plt.savefig(file_path, bbox_inches='tight', dpi=300)
+        print(f"Graph visualization saved as '{file_path}'")
+
         if display:
             plt.show()
         else:
@@ -141,37 +146,48 @@ class ChordProgressionGenerator:
             
         return progression
     
-    def create_multi_section_midi(self, sections, filename='full_progression.mid'):
+    def create_multi_section_midi(self, sections, folder_name='createdFiles', filename='full_progression.mid'):
         """Create a MIDI file with multiple sections"""
+        os.makedirs(folder_name, exist_ok=True)  # Ensure the folder exists
+        file_path = os.path.join(folder_name, filename)
+
         mf = MIDIFile(1)
         track = 0
         time = 0
         mf.addTrackName(track, time, "Multi-Section Progression")
         mf.addTempo(track, time, 120)
-        
+
         for section_key, progression in sections:
-            # Add each chord to the MIDI file
             for chord_numeral in progression:
                 chord_notes = self.keys[section_key][chord_numeral]
                 for note in chord_notes:
                     midi_note = self.note_to_midi[note]
                     mf.addNote(track, 0, midi_note, time, 2, 100)
                 time += 2
-            
-            # Add a slight pause between sections
-            time += 1
-            
-        with open(filename, 'wb') as outf:
+            time += 1  # Pause between sections
+
+        with open(file_path, 'wb') as outf:
             mf.writeFile(outf)
-    
-    def play_midi(self, filename='full_progression.mid'):
+
+        print(f"MIDI file saved as '{file_path}'")
+        return file_path
+
+    def play_midi(self, file_path):
         """Play the generated MIDI file"""
+        print(f"Playing MIDI file: {file_path}")
+        pygame.init()
         pygame.mixer.init()
-        pygame.mixer.music.load(filename)
-        pygame.mixer.music.play()
-        
-        while pygame.mixer.music.get_busy():
-            sleep(1)
+
+        try:
+            pygame.mixer.music.load(file_path)
+            pygame.mixer.music.play()
+            while pygame.mixer.music.get_busy():
+                sleep(1)
+        except Exception as e:
+            print(f"Error playing MIDI file: {e}")
+        finally:
+            pygame.mixer.quit()
+            pygame.quit()
 
 def main():
     # Initialize the generator
@@ -199,11 +215,10 @@ def main():
         ('Am', bridge),
         ('C', chorus)
     ]
-    
-    generator.create_multi_section_midi(sections)
-    print("\nMIDI file created as 'full_progression.mid'")
-    print("Playing full progression...")
-    generator.play_midi()
+    midi_path = generator.create_multi_section_midi(sections)
+
+    # Play the generated MIDI file
+    generator.play_midi(midi_path)
 
 if __name__ == "__main__":
     main()

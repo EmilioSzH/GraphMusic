@@ -3,6 +3,7 @@ import random
 import pygame
 import networkx as nx
 import matplotlib.pyplot as plt
+import os
 
 # Define melody map
 melody_map = {
@@ -50,16 +51,6 @@ melody_map = {
     ]
 }
 
-DRUM_NOTES = {
-    "Bass": 35,    # Acoustic Bass Drum
-    "Snare": 38,   # Acoustic Snare
-    "Hi-Hat": 42,  # Closed Hi-Hat
-    "Clap": 39,    # Hand Clap
-    "Tom": 45,     # Low Tom
-    "Cymbal": 49,  # Crash Cymbal 1
-}
-
-
 def generate_melody_pattern(lyrics, melody_map):
     """
     Generate a semi-random melody pattern based on lyrical structure and melody map.
@@ -80,39 +71,20 @@ def generate_melody_pattern(lyrics, melody_map):
     
     return melody_sequence
 
-def generate_drum_pattern(lyrics):
-    """
-    Generate a semi-random drum pattern based on lyrical structure
-    """
-    drum_mapping = {
-        'Verse 1': ['Bass', 'Snare', 'Hi-Hat', 'Tom'],
-        'Chorus': ['Bass', 'Snare', 'Cymbal', 'Clap'],
-        'Verse 2': ['Bass', 'Snare', 'Hi-Hat', 'Tom'],
-        'Bridge': ['Bass', 'Snare', 'Cymbal', 'Clap']
-    }
-    
-    drum_sequence = []
-    current_section = None
-    
-    for line, section in lyrics:
-        if section != current_section:
-            current_section = section
-        
-        # Choose 2-3 drum notes for each line
-        line_drums = random.choices(drum_mapping.get(section, ['Bass', 'Snare']), k=random.randint(2, 3))
-        drum_sequence.extend(line_drums)
-    
-    return drum_sequence
 
-def visualize_melody_with_full_nodes(melody_map):
+def visualize_melody_with_full_nodes(melody_map, folder_name='createdFiles'):
     """
-    Create and visualize melody graphs for each section, ensuring all nodes appear in all graphs,
+    Create and save melody graphs for each section, ensuring all nodes appear in all graphs,
     but highlighting only the nodes used in each specific section.
 
     Args:
         melody_map (dict): A dictionary where keys are sections (e.g., "Verse 1") 
                            and values are lists of dictionaries representing notes.
+        folder_name (str): The folder where the graphs will be saved.
     """
+    # Ensure the folder exists
+    os.makedirs(folder_name, exist_ok=True)
+
     # Helper function to convert MIDI note numbers to note names
     def midi_to_note_name(midi_note):
         NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
@@ -185,62 +157,64 @@ def visualize_melody_with_full_nodes(melody_map):
         # Add title for the section
         plt.title(f"Melody Graph - {section}", fontsize=20, fontweight="bold", pad=20)
         plt.axis("off")
-        plt.show()
+
+        # Save the graph in the createdFiles folder
+        file_path = os.path.join(folder_name, f"{section.replace(' ', '_')}_melody_graph.png")
+        plt.savefig(file_path, bbox_inches='tight', dpi=300)
+        print(f"Graph for '{section}' saved as '{file_path}'")
+
+        plt.close()
 
 # Example usage
 visualize_melody_with_full_nodes(melody_map)
 
 
-def create_combined_midi_file(melody_notes, drum_sequence):
+def create_midi_file(melody_notes, folder_name='createdFiles', filename='melody.mid'):
     """
-    Combine melody and drum tracks into a single MIDI file.
+    Save the melody to a MIDI file in the specified folder.
     Args:
         melody_notes (list): A list of dictionaries for melody notes.
-        drum_sequence (list): A list of drum note names.
+        folder_name (str): The name of the folder to save the file in.
+        filename (str): The name of the MIDI file.
     Returns:
-        str: The filename of the combined MIDI file.
+        str: The full path of the saved MIDI file.
     """
+    # Ensure the folder exists
+    os.makedirs(folder_name, exist_ok=True)
+    file_path = os.path.join(folder_name, filename)
+
+    # Create a MIDI file
     mid = MidiFile()
-    
-    # Create the melody track
     melody_track = MidiTrack()
     mid.tracks.append(melody_track)
+
     for note_data in melody_notes:
-        # Append the 'note_on' message
         melody_track.append(Message('note_on', note=note_data["note"], velocity=note_data["velocity"], time=0))
-        # Append the 'note_off' message after the specified duration
         melody_track.append(Message('note_off', note=note_data["note"], velocity=note_data["velocity"], time=note_data["duration"]))
     
-    # Create the drum track
-    drum_track = MidiTrack()
-    mid.tracks.append(drum_track)
-    for note_name in drum_sequence:
-        note = DRUM_NOTES[note_name]
-        drum_track.append(Message('note_on', note=note, velocity=64, time=0, channel=9))
-        drum_track.append(Message('note_off', note=note, velocity=64, time=480, channel=9))
-    
-    # Save the combined MIDI file
-    combined_midi_filename = 'combined_song.mid'
-    mid.save(combined_midi_filename)
-    return combined_midi_filename
+    # Save the MIDI file
+    mid.save(file_path)
+    print(f"MIDI file saved as '{file_path}'")
+    return file_path
 
 
-def play_midi_pygame(midi_file):
+def play_midi_pygame(file_path):
     """
-    Play MIDI file using pygame
+    Play a MIDI file using pygame.
+    Args:
+        file_path (str): The full path to the MIDI file to play.
     """
+    print(f"Playing MIDI file: {file_path}")
     pygame.init()
     pygame.mixer.init()
     
     try:
-        pygame.mixer.music.load(midi_file)
+        pygame.mixer.music.load(file_path)
         pygame.mixer.music.play()
-        
-        # Wait until playback is complete
         while pygame.mixer.music.get_busy():
             pygame.time.Clock().tick(10)
     except Exception as e:
-        print(f"Error playing MIDI: {e}")
+        print(f"Error playing MIDI file: {e}")
     finally:
         pygame.mixer.quit()
         pygame.quit()
@@ -273,15 +247,13 @@ lyrics = [
     ("CS 5002 leads the way", "Chorus"),
 ]
 
-# Generate melody notes and drum sequence
+# Generate melody notes
 melody_notes = generate_melody_pattern(lyrics, melody_map)
-full_drum_sequence = generate_drum_pattern(lyrics)
 
 # Combine melody and drum tracks into a MIDI file
-combined_midi_file = create_combined_midi_file(melody_notes, full_drum_sequence)
+midi_file = create_midi_file(melody_notes)
 
 # Play the MIDI file
 print("Attempting to play the combined MIDI file...")
-play_midi_pygame(combined_midi_file)
-
-print(f"Combined MIDI file '{combined_midi_file}' has been created.")
+play_midi_pygame(midi_file)
+print(f"Combined MIDI file '{midi_file}' has been created.")

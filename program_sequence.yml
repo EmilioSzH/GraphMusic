@@ -1,0 +1,25 @@
+sequence:
+  - name: "Run Lyrics Processor"
+    description: "Process lyrics."
+    script: "python lyrics.py"
+    output: "lyrics_data.txt"
+
+  - name: "Run Chords Generator"
+    description: "Generate the chords MIDI file."
+    script: "python chords.py"
+    output: "chords.mid"
+
+  - name: "Run Melody Generator"
+    description: "Generate the melody MIDI file."
+    script: "python melody.py"
+    output: "melody.mid"
+
+  - name: "Run Drum Generator"
+    description: "Generate the drum MIDI file."
+    script: "python drum.py"
+    output: "drums.mid"
+
+  - name: "Merge MIDI Files"
+    description: "Combine all generated MIDI tracks into a single file."
+    script: "python merge_tracks.py"
+    output: "merged_song.mid"
