@@ -92,6 +92,7 @@ def visualize_lyrics_graph(graph, path):
 if __name__ == "__main__":
     # Create the graph
     lyrics_graph = create_lyrics_graph(rhyme_groups)
+    print("Lyrical Graph created")
 
     # Define a rhyme scheme and generate lyrics
     # Song format: Verse / Chorus / Verse / Chorus / Bridge / Chorus
