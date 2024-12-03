@@ -51,12 +51,32 @@ melody_map = {
     ]
 }
 
-def generate_melody_pattern(lyrics, melody_map):
+# Helper function to convert MIDI note numbers to note names
+def midi_to_note_name(midi_note):
+        NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+        octave = midi_note // 12 - 1
+        note = NOTE_NAMES[midi_note % 12]
+        return f"{note}{octave}"
+
+def generate_melody_pattern_with_recording(lyrics, melody_map):
     """
     Generate a semi-random melody pattern based on lyrical structure and melody map.
+    Logs the picked notes for each section in human-readable format (e.g., C4) and
+    records them for further use.
+
+    Returns:
+        tuple: The melody sequence and a dictionary of picked notes by section.
     """
     melody_sequence = []
     current_section = None
+    section_picked_notes = {}  # Dictionary to store picked notes for each section
+
+    def midi_to_note_name(midi_note):
+        """Convert a MIDI note number to a human-readable note name."""
+        NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+        octave = midi_note // 12 - 1
+        note = NOTE_NAMES[midi_note % 12]
+        return f"{note}{octave}"
 
     for line, section in lyrics:
         if section != current_section:
@@ -68,105 +88,121 @@ def generate_melody_pattern(lyrics, melody_map):
         # Choose 2-4 notes for each line, preserving their articulation if specified
         line_melody = random.choices(section_melody, k=random.randint(2, 4))
         melody_sequence.extend(line_melody)
-    
-    return melody_sequence
+
+        # Convert picked notes to human-readable names
+        picked_notes = [midi_to_note_name(note["note"]) for note in line_melody]
+
+        # Log and store the picked notes for the current section
+        print(f"Section '{section}', Line '{line}': Picked notes: {picked_notes}")
+        if section not in section_picked_notes:
+            section_picked_notes[section] = []
+        section_picked_notes[section].extend(picked_notes)
+
+    return melody_sequence, section_picked_notes
 
 
-def visualize_melody_with_full_nodes(melody_map, folder_name='createdFiles'):
+
+def visualize_melody_graphs(picked_notes_by_section, melody_map, folder_name='createdFiles'):
     """
-    Create and save melody graphs for each section, ensuring all nodes appear in all graphs,
-    but highlighting only the nodes used in each specific section.
+    Create and save graphs:
+    1. Section-specific graphs: Nodes picked for the section are sky blue, other section nodes are gray.
+    2. Global graph: All nodes (11) are displayed, and nodes used in all sections are highlighted.
 
     Args:
-        melody_map (dict): A dictionary where keys are sections (e.g., "Verse 1") 
-                           and values are lists of dictionaries representing notes.
-        folder_name (str): The folder where the graphs will be saved.
+        picked_notes_by_section (dict): Notes picked by section from `generate_melody_pattern_with_recording`.
+        melody_map (dict): Original mapping of notes for each section.
+        folder_name (str): Directory to save the graphs.
     """
-    # Ensure the folder exists
-    os.makedirs(folder_name, exist_ok=True)
+    # Convert all section notes in melody_map to human-readable format
+    all_section_notes = {
+        section: {midi_to_note_name(note["note"]) for note in notes}
+        for section, notes in melody_map.items()
+    }
 
-    # Helper function to convert MIDI note numbers to note names
-    def midi_to_note_name(midi_note):
-        NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
-        octave = midi_note // 12 - 1
-        note = NOTE_NAMES[midi_note % 12]
-        return f"{note}{octave}"
-    
-    # Collect all unique nodes across all sections
-    all_notes = set()
-    for notes in melody_map.values():
-        for note_data in notes:
-            all_notes.add(midi_to_note_name(note_data["note"]))
-
-    # Visualize melody graph for each section
-    for section, notes in melody_map.items():
+    # Section-Specific Graphs
+    for section, picked_notes in picked_notes_by_section.items():
         G = nx.DiGraph()
-        
-        # Add all unique notes as nodes (to ensure all nodes appear in every graph)
-        for note in all_notes:
-            G.add_node(note)
-        
-        # Add edges for the section
-        section_nodes = set()
-        for i in range(len(notes) - 1):
-            current_note = midi_to_note_name(notes[i]["note"])
-            next_note = midi_to_note_name(notes[i + 1]["note"])
-            section_nodes.update([current_note, next_note])
-            
-            # Add edge
-            if G.has_edge(current_note, next_note):
-                G[current_note][next_note]["weight"] += 1
-            else:
-                G.add_edge(current_note, next_note, weight=1)
-        
-        # Create visualization
-        plt.figure(figsize=(12, 10))
+
+        # Nodes: All section notes in gray, picked notes in sky blue
+        section_nodes = all_section_notes.get(section, set())
+        G.add_nodes_from(section_nodes)
+
+        # Edges: Connect consecutive picked notes
+        picked_edges = [
+            (picked_notes[i], picked_notes[i + 1])
+            for i in range(len(picked_notes) - 1)
+        ]
+        G.add_edges_from(picked_edges)
+
+        # Visualization
+        plt.figure(figsize=(10, 8))
         pos = nx.spring_layout(G, k=0.8, iterations=50)
-        
-        # Draw all nodes in gray
+
+        # Draw gray nodes (all section nodes)
         nx.draw_networkx_nodes(
-            G, pos, 
-            nodelist=all_notes, 
-            node_color="lightgray", 
-            node_size=1000, 
-            edgecolors="black"
+            G, pos, nodelist=section_nodes, node_color="lightgray", node_size=1000, edgecolors="black"
         )
-        
-        # Highlight nodes used in the current section in blue
+        # Highlight picked nodes (sky blue)
         nx.draw_networkx_nodes(
-            G, pos, 
-            nodelist=section_nodes, 
-            node_color="skyblue", 
-            node_size=1000, 
-            edgecolors="black"
+            G, pos, nodelist=set(picked_notes), node_color="skyblue", node_size=1000, edgecolors="black"
         )
-        
-        # Draw edges with thickness proportional to weight
-        edge_weights = [G[u][v]["weight"] for u, v in G.edges()]
-        nx.draw_networkx_edges(
-            G, pos, 
-            edge_color="gray", 
-            width=[2 + weight * 0.5 for weight in edge_weights],
-            arrows=True, 
-            arrowsize=20
-        )
-        
-        # Add labels to nodes
+        # Draw edges
+        nx.draw_networkx_edges(G, pos, edge_color="gray", width=2, arrows=True, arrowsize=20)
+        # Add labels
         nx.draw_networkx_labels(G, pos, font_size=12, font_weight="bold")
-        
-        # Add title for the section
-        plt.title(f"Melody Graph - {section}", fontsize=20, fontweight="bold", pad=20)
+
+        # Add title
+        plt.title(f"Melody Graph - {section}", fontsize=16, fontweight="bold")
         plt.axis("off")
 
-        # Save the graph in the createdFiles folder
+        # Save figure
         file_path = os.path.join(folder_name, f"melody_{section.replace(' ', '_')}_graph.png")
         plt.savefig(file_path, bbox_inches='tight', dpi=300)
-        print(f"Graph for '{section}' saved as '{file_path}'")
-
+        print(f"Graph for section '{section}' saved at: {file_path}")
         plt.close()
 
-# Example usage
-visualize_melody_with_full_nodes(melody_map)
+    # Global Graph
+    all_global_nodes = {midi_to_note_name(note["note"]) for notes in melody_map.values() for note in notes}
+
+    # Combine all picked notes and edges from all sections
+    combined_edges = []
+    for picked_notes in picked_notes_by_section.values():
+        combined_edges.extend(
+            (picked_notes[i], picked_notes[i + 1])
+            for i in range(len(picked_notes) - 1)
+        )
+
+    G_global = nx.DiGraph()
+    G_global.add_nodes_from(all_global_nodes)
+    G_global.add_edges_from(combined_edges)
+
+    # Visualization for the global graph
+    plt.figure(figsize=(12, 10))
+    pos = nx.spring_layout(G_global, k=0.8, iterations=50)
+
+    # Draw all nodes in gray
+    nx.draw_networkx_nodes(
+        G_global, pos, nodelist=all_global_nodes, node_color="lightgray", node_size=1000, edgecolors="black"
+    )
+    # Highlight nodes used in all sections (sky blue)
+    nodes_used = set().union(*[set(picked) for picked in picked_notes_by_section.values()])
+    nx.draw_networkx_nodes(
+        G_global, pos, nodelist=nodes_used, node_color="skyblue", node_size=1000, edgecolors="black"
+    )
+    # Draw edges (from combined picked notes across all sections)
+    nx.draw_networkx_edges(G_global, pos, edge_color="gray", width=2, arrows=True, arrowsize=20)
+    # Add labels
+    nx.draw_networkx_labels(G_global, pos, font_size=12, font_weight="bold")
+
+    # Add title
+    plt.title("Global Melody Graph", fontsize=18, fontweight="bold")
+    plt.axis("off")
+
+    # Save figure
+    global_file_path = os.path.join(folder_name, "global_melody_graph.png")
+    plt.savefig(global_file_path, bbox_inches='tight', dpi=300)
+    print(f"Global melody graph saved at: {global_file_path}")
+    plt.close()
 
 
 def create_midi_file(melody_notes, folder_name='createdFiles', filename='melody.mid'):
@@ -247,8 +283,12 @@ lyrics = [
     ("CS 5002 leads the way", "Chorus"),
 ]
 
-# Generate melody notes
-melody_notes = generate_melody_pattern(lyrics, melody_map)
+
+# Generate melody notes and record picked notes by section
+melody_notes, picked_notes_by_section = generate_melody_pattern_with_recording(lyrics, melody_map)
+
+# Visualize and save melody graphs
+visualize_melody_graphs(picked_notes_by_section, melody_map)
 
 # Combine melody and drum tracks into a MIDI file
 midi_file = create_midi_file(melody_notes)
