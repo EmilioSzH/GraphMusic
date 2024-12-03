@@ -43,6 +43,7 @@ This project was developed as the **Final Project for CS5002: Discrete Structure
     - `matplotlib`
     - `networkx`
     - `pyyaml`
+    - `midiutil`
 
 4. **Verify installation**:
     Ensure you have the required environment to run the project:
@@ -56,7 +57,7 @@ This project was developed as the **Final Project for CS5002: Discrete Structure
 ### 1. Running the Complete Workflow
 The project is designed to run automatically using a YAML configuration file and the `sequence.py` script.
 
-1. **Edit the YAML configuration file** (`config.yml`):
+1. **Edit the YAML configuration file** (`program_sequence.yml`):
     ```yaml
     sequence:
       - name: "Run Lyrics Processor"
@@ -76,7 +77,7 @@ The project is designed to run automatically using a YAML configuration file and
 
       - name: "Run Drum Generator"
         description: "Generate the drum MIDI file."
-        script: "python drums.py"
+        script: "python drum.py"
         output: "drum_pattern.mid"
 
       - name: "Merge MIDI Files"
